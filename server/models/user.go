@@ -72,7 +72,6 @@ func UserInfo(session *rpc.Session, ret *pb.Msg) {
 		msg = &pb.Msg{UserInfoResponse: &pb.UserInfoResponse{Username: res.Username, Nickname: res.Nickname, Pic: res.ProfilePic, Password: res.Password}}
 
 		go func() {
-			// toCache, _ := json.Marshal(msg)
 			toCache, err := msg.Encode()
 			if err != nil {
 				log.Println(err)
