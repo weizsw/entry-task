@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+
+  <body>
+    <style>
+      #app {
+        font-family: Avenir, Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-align: center;
+        color: #2c3e50;
+        margin-top: 60px;
+      }
+    </style>
+    <div id="app">
+      <div>Username: {{.Username}}</div>
+
+      <form action="/nickname" method="POST">
+        <div>Nickname: {{.Nickname}}</div>
+        <div><input type="hidden" value="{{.Username}}" name="username" /></div>
+        <div><input type="text" name="nickname" /></div>
+        <div><input type="submit" value="Change" /></div>
+      </form>
+      <img src="{{.Pic}}" width="300" height="300" />
+      <div style="padding-top: 10px"></div>
+      <form action="/pic" method="POST" enctype="multipart/form-data">
+        <div><input type="hidden" value="{{.Username}}" name="username" /></div>
+        <div>
+          <input
+            id="upload-input"
+            type="file"
+            accept="image/gif, image/jpg, image/png"
+            name="pic"
+          /><input type="submit" value="Update" />
+        </div>
+      </form>
+      <div>
+        <font color="#FF0000">{{.Msg}}</font>
+      </div>
+    </div>
+  </body>
+</html>
