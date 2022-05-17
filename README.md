@@ -91,7 +91,7 @@ k6 run scripts/login.js --duration 30s --vus 1000 --rps 6000
 
 ## Process
 
-**all params are required for requests below**
+***All params are required for requests below***
 
 ### login
 
@@ -220,9 +220,9 @@ CREATE TABLE users (
 
 ## Redis Design
 
-> for a token, hash was used, tokens are saved as "user:token:{username}" as the key, each token takes a field and value is 1.
+> For a token, hash was used, tokens are saved as "user:token:{username}" as the key, each token takes a field and value is 1.
 
-> the others are just normal string.
+> The others are just normal string.
 
 ## Password Enncryption
 
@@ -241,9 +241,9 @@ type Pool struct {
 }
 ```
 
->channel was used for the connection pool, there will 2000 connections established with TCP server once the client is initiated, each request sent by HTTP server will acquire a connection from the pool, if there are no connections left in the pool and the max size is not reached, the factory will produce a new connection.
+>Channel was used for the connection pool, there will be 2000 connections established with TCP server once the client is initiated, each request sent by HTTP server will acquire a connection from the pool, if there are no connections left in the pool and the max size is not reached, the factory will produce a new connection.
 
->once the request is finished, the connection will be released to the pool for future use. basically, there are 2000 connections maintained.
+>Once the request is finished, the connection will be released to the pool for future use. basically, there are 2000 connections maintained.
 
 ## Benchmark
 
