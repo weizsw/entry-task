@@ -36,7 +36,7 @@ func Login(username string, password string) (int, interface{}, error) {
 	}
 
 	data := map[string]interface{}{}
-	data["token"] = ret.Token
+	data["token"] = ret.LoginResp.Token
 
 	return errno.StatusOK, data, nil
 }
@@ -56,14 +56,14 @@ func Register(username string, password string) (int, error) {
 
 	ret, err := rpc.SendRequestForResp(session, &msg)
 
-	if ret.Response.Code != 0 {
-		return int(ret.Response.Code), err
+	if ret.Code != 0 {
+		return int(ret.Code), err
 	}
 
 	return errno.StatusOK, nil
 }
 
-func ChangeNickname(username string, nickname string, token string) (int, error) {
+func ChangeNickname(username string, nickname string) (int, error) {
 	conn, err := resource.CP.Get()
 	defer resource.CP.Put(conn)
 
@@ -74,7 +74,7 @@ func ChangeNickname(username string, nickname string, token string) (int, error)
 
 	session := rpc.NewSession(conn)
 
-	msg := pb.Msg{ServiceName: "changenickname", ChangeNicknameRequest: &pb.ChangeNicknameRequest{Username: username, Nickname: nickname}, Token: token}
+	msg := pb.Msg{ServiceName: "changenickname", ChangeNicknameRequest: &pb.ChangeNicknameRequest{Username: username, Nickname: nickname}}
 
 	_, err = rpc.SendRequestForResp(session, &msg)
 
@@ -85,7 +85,7 @@ func ChangeNickname(username string, nickname string, token string) (int, error)
 	return errno.StatusOK, nil
 }
 
-func GetUserProfile(username string, token string) (int, interface{}, error) {
+func GetUserProfile(username string) (int, interface{}, error) {
 	conn, err := resource.CP.Get()
 	defer resource.CP.Put(conn)
 
@@ -95,7 +95,7 @@ func GetUserProfile(username string, token string) (int, interface{}, error) {
 	}
 
 	session := rpc.NewSession(conn)
-	msg := pb.Msg{ServiceName: "getprofile", GetProfileRequest: &pb.GetProfileRequest{Username: username}, Token: token}
+	msg := pb.Msg{ServiceName: "getprofile", GetProfileRequest: &pb.GetProfileRequest{Username: username}}
 
 	ret, err := rpc.SendRequestForResp(session, &msg)
 	if err != nil {
@@ -114,7 +114,7 @@ func GetUserProfile(username string, token string) (int, interface{}, error) {
 	return errno.StatusOK, data, nil
 }
 
-func UpdatePic(username string, pic string, token string) (int, error) {
+func UpdatePic(username string, pic string) (int, error) {
 	conn, err := resource.CP.Get()
 	defer resource.CP.Put(conn)
 
@@ -125,7 +125,7 @@ func UpdatePic(username string, pic string, token string) (int, error) {
 
 	session := rpc.NewSession(conn)
 
-	msg := pb.Msg{ServiceName: "updateprofile", UpdateProfileRequest: &pb.UpdateProfileRequest{Username: username, Pic: pic}, Token: token}
+	msg := pb.Msg{ServiceName: "updateprofile", UpdatePicRequest: &pb.UpdatePicRequest{Username: username, Pic: pic}}
 
 	ret, err := rpc.SendRequestForResp(session, &msg)
 

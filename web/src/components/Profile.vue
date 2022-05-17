@@ -1,15 +1,20 @@
 <template>
     <div>Username: {{ username }}</div>
     <div>Nickname: {{ nicknameDisplay }}</div>
-    <div><input type="text" v-model="nickname"> <button @click="changeNickName">Change</button></div>
+    <div class="in"><input type="text" v-model="nickname"> <button @click="changeNickName">Change</button></div>
     <div class="dp"><img :src="pic" alt=""></div>
-    <div><input type="file" ref="fileInt" accept="image/png, image/jpeg" @change="changePic">
+    <div><input type="file" ref="fileInt" accept="image/png, image/jpeg"><button @click="changePic">Upload</button>
     </div>
 </template>
 <style>
 img {
+    margin: 1%;
     width: 300px;
     height: 300px;
+}
+
+.in {
+    padding-top: 10px;
 }
 </style>
 <script>

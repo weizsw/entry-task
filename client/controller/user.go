@@ -16,6 +16,8 @@ import (
 	"github.com/weizsw/entry-task/client/models"
 	"github.com/weizsw/entry-task/client/utils"
 	"github.com/weizsw/entry-task/pb"
+	"github.com/weizsw/entry-task/server/dao/redis"
+	"github.com/weizsw/entry-task/server/resource"
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +41,9 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		utils.RenderJson(w, errno.StatusParamsError, nil, errors.New("username is empty"))
 		return
 	}
+
 	log.Println(reqBody.Username)
+
 	if len(reqBody.Password) == 0 {
 		utils.RenderJson(w, errno.StatusParamsError, nil, errors.New("password is empty"))
 		return
@@ -91,7 +95,14 @@ func ChangeNickname(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	code, err := models.ChangeNickname(reqBody.Username, reqBody.Nickname, reqBody.Token)
+	_, err = redis.HGet(resource.RedisClient, fmt.Sprintf(redis.USER_TOKEN_FMT, reqBody.Username), reqBody.Token)
+	if err != nil {
+		log.Println(err.Error())
+		utils.RenderJson(w, errno.StatusAuthError, nil, errors.New(errno.ErrorMsg[errno.StatusAuthError]))
+		return
+	}
+
+	code, err := models.ChangeNickname(reqBody.Username, reqBody.Nickname)
 
 	utils.RenderJson(w, code, nil, err)
 }
@@ -104,7 +115,14 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	code, data, err := models.GetUserProfile(reqBody.Username, reqBody.Token)
+	_, err = redis.HGet(resource.RedisClient, fmt.Sprintf(redis.USER_TOKEN_FMT, reqBody.Username), reqBody.Token)
+	if err != nil {
+		log.Println(err.Error())
+		utils.RenderJson(w, errno.StatusAuthError, nil, errors.New(errno.ErrorMsg[errno.StatusAuthError]))
+		return
+	}
+
+	code, data, err := models.GetUserProfile(reqBody.Username)
 	if err != nil {
 		utils.RenderJson(w, code, nil, err)
 		return
@@ -131,6 +149,13 @@ func UpdatePic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	_, err = redis.HGet(resource.RedisClient, fmt.Sprintf(redis.USER_TOKEN_FMT, username), token)
+	if err != nil {
+		log.Println(err.Error())
+		utils.RenderJson(w, errno.StatusAuthError, nil, errors.New(errno.ErrorMsg[errno.StatusAuthError]))
+		return
+	}
+
 	ext := strings.ToLower(path.Ext(header.Filename))
 	if ext != ".jpg" && ext != ".png" && ext != ".jpeg" {
 		utils.RenderJson(w, errno.StatusParamsError, nil, errors.New("jpg/png supported only"))
@@ -149,7 +174,7 @@ func UpdatePic(w http.ResponseWriter, r *http.Request) {
 	defer saveFile.Close()
 
 	url = "http://localhost:8080/assets/" + username + ext
-	_, err = models.UpdatePic(username, url, token)
+	_, err = models.UpdatePic(username, url)
 
 	ret := map[string]interface{}{}
 	ret["pic"] = url

@@ -5,18 +5,16 @@ option go_package = "./pb";
 
 message Msg {
   string  ServiceName  = 1;
-  Response Response = 2;
-  LoginRequest LoginRequest = 3;
+  LoginRequest LoginRequest = 2;
+  LoginResp LoginResp = 3;
   RegisterRequest RegisterRequest = 4;
   GetProfileRequest GetProfileRequest = 5;
   GetProfileResp GetProfileResp = 6;
   ChangeNicknameRequest ChangeNicknameRequest = 7;
-  UpdateProfileRequest UpdateProfileRequest = 8;
-  int32 Code = 9;
-  string Message = 10;
-  LoginResp LoginResp = 11;
-  string Token = 12;
-  UpdatePicResp UpdatePicResp = 13;
+  UpdatePicRequest UpdatePicRequest = 8;
+  UpdatePicResp UpdatePicResp = 9;
+  int32 Code = 10;
+  string Message = 11;
 }
 
 message Response {
@@ -57,7 +55,7 @@ message ChangeNicknameRequest {
   string token = 3;
 }
 
-message UpdateProfileRequest {
+message UpdatePicRequest {
   string username = 1;
   string pic = 2;
   string token = 3;

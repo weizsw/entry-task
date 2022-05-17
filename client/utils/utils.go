@@ -42,7 +42,11 @@ func RenderJson(w http.ResponseWriter, code int, data interface{}, err error) {
 	if code < 300 {
 		w.WriteHeader(200)
 	} else if code < 500 {
-		w.WriteHeader(400)
+		if code == 401 {
+			w.WriteHeader(401)
+		} else {
+			w.WriteHeader(400)
+		}
 	} else {
 		w.WriteHeader(500)
 	}
