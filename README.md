@@ -67,7 +67,7 @@ npm run dev
 
 >Benchmark
 
-```json
+```bash
 brew install k6
 k6 run scripts/login.js --duration 30s --vus 1000 --rps 6000
 ```
