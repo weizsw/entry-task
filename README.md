@@ -9,6 +9,23 @@
   <img src="https://img.shields.io/badge/MySQL-8.0.29-lightgrey?style=flat-square&logo=mysql">
 </p>
 
+- [Entry Task](#entry-task)
+  - [TL;DR](#tldr)
+  - [Structure](#structure)
+  - [Setup](#setup)
+  - [Usage](#usage)
+  - [Process](#process)
+    - [login](#login)
+    - [user profile](#user-profile)
+    - [change nickname](#change-nickname)
+    - [change avatar](#change-avatar)
+    - [register](#register)
+  - [Database Design](#database-design)
+  - [Redis Design](#redis-design)
+  - [Password Enncryption](#password-enncryption)
+  - [Simple Connection Pool](#simple-connection-pool)
+  - [Benchmark](#benchmark)
+
 ## TL;DR
 
 ```text
@@ -72,7 +89,7 @@ brew install k6
 k6 run scripts/login.js --duration 30s --vus 1000 --rps 6000
 ```
 
-## Logic Flow
+## Process
 
 **all params are required for requests below**
 
@@ -150,7 +167,7 @@ curl --location --request POST '127.0.0.1:8080/nickname' \
 
 >Return Example
 
-```bash
+```json
 {
     "code": 0,
     "data": {
