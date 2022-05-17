@@ -25,15 +25,15 @@ func initMysqlOnce() {
 		panic(err)
 	}
 
-	client.SetMaxOpenConns(1000)
-	client.SetMaxIdleConns(1000)
+	client.SetMaxOpenConns(2000)
+	client.SetMaxIdleConns(2000)
 	resource.MysqlClient = client
 
 	stmt, err := client.Prepare("SELECT * FROM users WHERE username = ?")
 	if err != nil {
 		panic(err)
 	}
-	resource.UserInfoStatement = stmt
+	resource.UserProfileStatement = stmt
 }
 
 func initRedisOnce() {

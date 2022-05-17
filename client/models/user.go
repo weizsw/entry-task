@@ -1,43 +1,44 @@
 package models
 
 import (
-	"errors"
 	"log"
-	"net"
 
 	"github.com/weizsw/entry-task/client/errno"
 	"github.com/weizsw/entry-task/client/resource"
+
+	"github.com/weizsw/entry-task/client/utils"
 	"github.com/weizsw/entry-task/pb"
 	"github.com/weizsw/entry-task/rpc"
 )
 
-func Login(username string, password string) (int, error) {
+func Login(username string, password string) (int, interface{}, error) {
 	conn, err := resource.CP.Get()
 	defer resource.CP.Put(conn)
 
 	if err != nil {
 		log.Println(err.Error())
-		return errno.StatusParamsError, err
+		return errno.StatusParamsError, nil, err
 	}
 
-	// conn, err := net.DialTimeout("tcp", "127.0.0.1:8989", time.Second)
-	// if err != nil {
-	// 	log.Println(err.Error())
-	// 	return errno.StatusServerError, err
-	// }
-	// defer conn.Close()
+	session := rpc.NewSession(conn)
+	hash := utils.GetMD5Hash(password)
 
-	session := rpc.NewSession(conn.(net.Conn))
+	msg := pb.Msg{ServiceName: "login", LoginRequest: &pb.LoginRequest{Username: username, Password: hash}}
 
-	msg := pb.Msg{ServiceName: "login", LoginRequest: &pb.LoginRequest{Username: username, Password: password}}
+	ret, err := rpc.SendRequestForResp(session, &msg)
 
-	ret, err := rpc.SendRequestForResponse(session, &msg)
-
-	if ret.Response.Code != 0 {
-		return int(ret.Response.Code), err
+	if err != nil {
+		return errno.StatusParamsError, nil, err
 	}
 
-	return errno.StatusOK, nil
+	if ret.Code != 0 {
+		return int(ret.Code), nil, nil
+	}
+
+	data := map[string]interface{}{}
+	data["token"] = ret.Token
+
+	return errno.StatusOK, data, nil
 }
 
 func Register(username string, password string) (int, error) {
@@ -49,11 +50,11 @@ func Register(username string, password string) (int, error) {
 		return errno.StatusParamsError, err
 	}
 
-	session := rpc.NewSession(conn.(net.Conn))
+	session := rpc.NewSession(conn)
 
 	msg := pb.Msg{ServiceName: "register", RegisterRequest: &pb.RegisterRequest{Username: username, Password: password}}
 
-	ret, err := rpc.SendRequestForResponse(session, &msg)
+	ret, err := rpc.SendRequestForResp(session, &msg)
 
 	if ret.Response.Code != 0 {
 		return int(ret.Response.Code), err
@@ -62,33 +63,58 @@ func Register(username string, password string) (int, error) {
 	return errno.StatusOK, nil
 }
 
-func GetUserInfo(username string) (int, *pb.Msg, error) {
+func ChangeNickname(username string, nickname string, token string) (int, error) {
 	conn, err := resource.CP.Get()
 	defer resource.CP.Put(conn)
 
 	if err != nil {
 		log.Println(err.Error())
-		return errno.StatusParamsError, nil, err
+		return errno.StatusParamsError, err
 	}
 
-	session := rpc.NewSession(conn.(net.Conn))
+	session := rpc.NewSession(conn)
 
-	msg := pb.Msg{ServiceName: "userinfo", UserInfoRequest: &pb.UserInfoRequest{Username: username}}
+	msg := pb.Msg{ServiceName: "changenickname", ChangeNicknameRequest: &pb.ChangeNicknameRequest{Username: username, Nickname: nickname}, Token: token}
 
-	ret, err := rpc.SendRequestForResponse(session, &msg)
+	_, err = rpc.SendRequestForResp(session, &msg)
 
 	if err != nil {
+		return errno.StatusServerError, err
+	}
+
+	return errno.StatusOK, nil
+}
+
+func GetUserProfile(username string, token string) (int, interface{}, error) {
+	conn, err := resource.CP.Get()
+	defer resource.CP.Put(conn)
+
+	if err != nil {
+		log.Println(err.Error())
 		return errno.StatusServerError, nil, err
 	}
 
-	if ret.Response != nil && ret.Response.Code != 0 {
-		return errno.StatusParamsError, nil, errors.New(errno.ErrorMsg[errno.StatusParamsError])
+	session := rpc.NewSession(conn)
+	msg := pb.Msg{ServiceName: "getprofile", GetProfileRequest: &pb.GetProfileRequest{Username: username}, Token: token}
+
+	ret, err := rpc.SendRequestForResp(session, &msg)
+	if err != nil {
+		return errno.StatusServerError, nil, err
+	}
+	if ret.Code != 0 {
+		return errno.StatusServerError, nil, nil
 	}
 
-	return errno.StatusOK, ret, nil
+	data := map[string]interface{}{
+		"username": ret.GetProfileResp.Username,
+		"nickname": ret.GetProfileResp.Nickname,
+		"pic":      ret.GetProfileResp.Pic,
+	}
+
+	return errno.StatusOK, data, nil
 }
 
-func ChangeNickname(username string, nickname string) (int, error) {
+func UpdatePic(username string, pic string, token string) (int, error) {
 	conn, err := resource.CP.Get()
 	defer resource.CP.Put(conn)
 
@@ -97,36 +123,14 @@ func ChangeNickname(username string, nickname string) (int, error) {
 		return errno.StatusParamsError, err
 	}
 
-	session := rpc.NewSession(conn.(net.Conn))
+	session := rpc.NewSession(conn)
 
-	msg := pb.Msg{ServiceName: "changenickname", ChangeNicknameRequest: &pb.ChangeNicknameRequest{Username: username, Nickname: nickname}}
+	msg := pb.Msg{ServiceName: "updateprofile", UpdateProfileRequest: &pb.UpdateProfileRequest{Username: username, Pic: pic}, Token: token}
 
-	ret, err := rpc.SendRequestForResponse(session, &msg)
+	ret, err := rpc.SendRequestForResp(session, &msg)
 
-	if ret.Response.Code != 0 {
-		return int(ret.Response.Code), err
-	}
-
-	return errno.StatusOK, nil
-}
-
-func UpdateProfile(username string, pic string) (int, error) {
-	conn, err := resource.CP.Get()
-	defer resource.CP.Put(conn)
-
-	if err != nil {
-		log.Println(err.Error())
-		return errno.StatusParamsError, err
-	}
-
-	session := rpc.NewSession(conn.(net.Conn))
-
-	msg := pb.Msg{ServiceName: "updateprofile", UpdateProfileRequest: &pb.UpdateProfileRequest{Username: username, Pic: pic}}
-
-	ret, err := rpc.SendRequestForResponse(session, &msg)
-
-	if ret.Response.Code != 0 {
-		return int(ret.Response.Code), err
+	if ret.Code != 0 {
+		return int(ret.Code), err
 	}
 
 	return errno.StatusOK, nil

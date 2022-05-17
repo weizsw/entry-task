@@ -12,9 +12,9 @@ import (
 var HandlerFunc = map[string]func(*rpc.Session, *pb.Msg){
 	"login":          models.Login,
 	"register":       models.Register,
-	"userinfo":       models.UserInfo,
+	"getprofile":     models.GetUserProfile,
 	"changenickname": models.ChangeNickname,
-	"updateprofile":  models.UpdateProfile,
+	"updateprofile":  models.UpdatePic,
 }
 
 func HandleConn(conn net.Conn) {
@@ -25,10 +25,10 @@ func HandleConn(conn net.Conn) {
 		if err != nil {
 			log.Fatal(err.Error())
 		}
-		ret := &pb.Msg{}
-		err = ret.Decode(data)
+		req := &pb.Msg{}
+		err = req.Decode(data)
 
 		// log.Println("receive func name:", ret.ServiceName)
-		HandlerFunc[ret.ServiceName](session, ret)
+		HandlerFunc[req.ServiceName](session, req)
 	}
 }

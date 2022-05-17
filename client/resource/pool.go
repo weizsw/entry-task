@@ -2,8 +2,8 @@ package resource
 
 import (
 	"errors"
-	"io"
 	"log"
+	"net"
 	"sync"
 )
 
@@ -11,21 +11,21 @@ var CP *Pool
 
 type Pool struct {
 	m        sync.Mutex
-	resource chan io.Closer
+	resource chan net.Conn
 	maxSize  int
 	usedSize int
-	factory  func() (io.Closer, error)
+	factory  func() (net.Conn, error)
 	closed   bool
 }
 
-func NewConnPool(factory func() (io.Closer, error), cap int) (*Pool, error) {
+func NewConnPool(factory func() (net.Conn, error), cap int) (*Pool, error) {
 	if cap <= 0 {
 		return nil, errors.New("cap could not be zero")
 	}
 
 	cp := &Pool{
 		m:        sync.Mutex{},
-		resource: make(chan io.Closer, cap),
+		resource: make(chan net.Conn, cap),
 		maxSize:  cap,
 		usedSize: 0,
 		factory:  factory,
@@ -44,7 +44,7 @@ func NewConnPool(factory func() (io.Closer, error), cap int) (*Pool, error) {
 	return cp, nil
 }
 
-func (p *Pool) Get() (io.Closer, error) {
+func (p *Pool) Get() (net.Conn, error) {
 	p.m.Lock()
 	defer p.m.Unlock()
 
@@ -69,7 +69,7 @@ func (p *Pool) Get() (io.Closer, error) {
 	}
 }
 
-func (p *Pool) Put(r io.Closer) {
+func (p *Pool) Put(r net.Conn) {
 	p.m.Lock()
 	defer p.m.Unlock()
 

@@ -1,12 +1,13 @@
 package rpc
 
 import (
+	"errors"
 	"log"
 
 	"github.com/weizsw/entry-task/pb"
 )
 
-func SendRequestForResponse(session *Session, messageProto *pb.Msg) (*pb.Msg, error) {
+func SendRequestForResp(session *Session, messageProto *pb.Msg) (*pb.Msg, error) {
 	data, err := messageProto.Encode()
 	if err != nil {
 		log.Println(err.Error())
@@ -28,6 +29,10 @@ func SendRequestForResponse(session *Session, messageProto *pb.Msg) (*pb.Msg, er
 	if err != nil {
 		log.Println(err.Error())
 		return nil, err
+	}
+
+	if ret.Code != 0 {
+		return nil, errors.New(ret.Message)
 	}
 
 	return ret, nil

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"html/template"
@@ -14,6 +15,7 @@ import (
 	"github.com/weizsw/entry-task/client/errno"
 	"github.com/weizsw/entry-task/client/models"
 	"github.com/weizsw/entry-task/client/utils"
+	"github.com/weizsw/entry-task/pb"
 )
 
 func Index(w http.ResponseWriter, r *http.Request) {
@@ -26,41 +28,35 @@ func Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
-	username := r.FormValue("username")
-	log.Println(username)
-	if len(username) == 0 {
-		// utils.RenderIndex(w, errno.StatusParamsError)
-		utils.RenderJson(w, errno.StatusParamsError, nil, errors.New("username is empty"))
+	var reqBody *pb.LoginRequest
+	err := json.NewDecoder(r.Body).Decode(&reqBody)
+	if err != nil {
+		utils.RenderJson(w, errno.StatusParamsError, nil, errors.New("login credentials error"))
 		return
 	}
 
-	password := r.FormValue("password")
-	if len(password) == 0 {
-		// utils.RenderIndex(w, errno.StatusParamsError)
+	if len(reqBody.Username) == 0 {
+		utils.RenderJson(w, errno.StatusParamsError, nil, errors.New("username is empty"))
+		return
+	}
+	log.Println(reqBody.Username)
+	if len(reqBody.Password) == 0 {
 		utils.RenderJson(w, errno.StatusParamsError, nil, errors.New("password is empty"))
 		return
 	}
 
-	// cookie, _ := r.Cookie(username)
-	// if cookie != nil && cookie.Value == username {
-	// 	// utils.RenderLogin(w, username, nil)
-	// 	utils.RenderJson(w, 0, "ok", nil)
-	// 	return
-	// }
-
-	code, err := models.Login(username, password)
+	code, data, err := models.Login(reqBody.Username, reqBody.Password)
 	if err != nil {
-		utils.RenderIndex(w, code)
+		utils.RenderJson(w, code, nil, err)
 		return
 	}
 
 	if code != errno.StatusOK {
-		utils.RenderIndex(w, code)
-		// utils.SetCookie(w, username, username)
+		utils.RenderJson(w, code, nil, err)
+		return
 	}
 
-	utils.RenderLogin(w, username, nil)
-	// utils.RenderJson(w, code, "ok", err)
+	utils.RenderJson(w, errno.StatusOK, data, nil)
 	return
 }
 
@@ -83,29 +79,50 @@ func Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func ChangeNickname(w http.ResponseWriter, r *http.Request) {
-	username := r.PostFormValue("username")
-	if len(username) == 0 {
-		utils.RenderJson(w, errno.StatusParamsError, nil, errors.New("username is empty"))
+	reqBody := &pb.ChangeNicknameRequest{}
+	err := json.NewDecoder(r.Body).Decode(&reqBody)
+	if err != nil {
+		utils.RenderJson(w, errno.StatusParamsError, nil, errors.New("change nickname error"))
 		return
 	}
 
-	nickname := r.PostFormValue("nickname")
-	if len(nickname) == 0 {
-		utils.RenderJson(w, errno.StatusParamsError, nil, errors.New("nickname is empty"))
+	if len(reqBody.Username) == 0 || len(reqBody.Nickname) == 0 || len(reqBody.Token) == 0 {
+		utils.RenderJson(w, errno.StatusParamsError, nil, nil)
 		return
 	}
 
-	_, err := models.ChangeNickname(username, nickname)
+	code, err := models.ChangeNickname(reqBody.Username, reqBody.Nickname, reqBody.Token)
 
-	utils.RenderLogin(w, username, err)
+	utils.RenderJson(w, code, nil, err)
 }
 
-func UpdateProfile(w http.ResponseWriter, r *http.Request) {
+func GetProfile(w http.ResponseWriter, r *http.Request) {
+	var reqBody *pb.GetProfileRequest
+	err := json.NewDecoder(r.Body).Decode(&reqBody)
+	if err != nil {
+		utils.RenderJson(w, errno.StatusParamsError, nil, err)
+		return
+	}
+
+	code, data, err := models.GetUserProfile(reqBody.Username, reqBody.Token)
+	if err != nil {
+		utils.RenderJson(w, code, nil, err)
+		return
+	}
+
+	utils.RenderJson(w, code, data, err)
+}
+
+func UpdatePic(w http.ResponseWriter, r *http.Request) {
 	username := r.FormValue("username")
 
 	if len(username) == 0 {
 		utils.RenderJson(w, errno.StatusParamsError, nil, errors.New("username is empty"))
 		return
+	}
+	token := r.FormValue("token")
+	if len(token) == 0 {
+		utils.RenderJson(w, errno.StatusParamsError, nil, errors.New("token is empty"))
 	}
 
 	pic, header, err := r.FormFile("pic")
@@ -120,8 +137,8 @@ func UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	path := "./assets/" + username + ext
-	saveFile, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0666)
+	url := "./assets/" + username + ext
+	saveFile, err := os.OpenFile(url, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -131,8 +148,13 @@ func UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	defer pic.Close()
 	defer saveFile.Close()
 
-	_, err = models.UpdateProfile(username, path)
-	utils.RenderLogin(w, username, err)
+	url = "http://localhost:8080/assets/" + username + ext
+	_, err = models.UpdatePic(username, url, token)
+
+	ret := map[string]interface{}{}
+	ret["pic"] = url
+
+	utils.RenderJson(w, errno.StatusOK, ret, err)
 }
 
 func AssetsFunc(w http.ResponseWriter, r *http.Request) {

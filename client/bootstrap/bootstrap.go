@@ -1,7 +1,6 @@
 package bootstrap
 
 import (
-	"io"
 	"log"
 	"net"
 	_ "net/http/pprof"
@@ -16,7 +15,7 @@ func Init() {
 }
 
 func initConnPool() {
-	cp, err := resource.NewConnPool(func() (io.Closer, error) {
+	cp, err := resource.NewConnPool(func() (net.Conn, error) {
 		conn, err := net.ResolveTCPAddr("tcp", "127.0.0.1:8989")
 		if err != nil {
 			return nil, err

@@ -8,10 +8,15 @@ message Msg {
   Response Response = 2;
   LoginRequest LoginRequest = 3;
   RegisterRequest RegisterRequest = 4;
-  UserInfoRequest UserInfoRequest = 5;
-  UserInfoResponse UserInfoResponse = 6;
+  GetProfileRequest GetProfileRequest = 5;
+  GetProfileResp GetProfileResp = 6;
   ChangeNicknameRequest ChangeNicknameRequest = 7;
   UpdateProfileRequest UpdateProfileRequest = 8;
+  int32 Code = 9;
+  string Message = 10;
+  LoginResp LoginResp = 11;
+  string Token = 12;
+  UpdatePicResp UpdatePicResp = 13;
 }
 
 message Response {
@@ -25,16 +30,21 @@ message LoginRequest {
   string password = 2;
 }
 
+message LoginResp{
+  string token = 1;
+}
+
 message RegisterRequest {
   string username = 1;
   string password = 2;
 }
 
-message UserInfoRequest {
+message GetProfileRequest {
   string username = 1;
+  string token = 2;
 }
 
-message UserInfoResponse {
+message GetProfileResp {
   string username = 1;
   string nickname = 2;
   string password = 3;
@@ -44,9 +54,15 @@ message UserInfoResponse {
 message ChangeNicknameRequest {
   string username = 1;
   string nickname = 2;
+  string token = 3;
 }
 
 message UpdateProfileRequest {
   string username = 1;
   string pic = 2;
+  string token = 3;
+}
+
+message UpdatePicResp {
+  string pic = 1;
 }

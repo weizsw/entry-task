@@ -42,7 +42,7 @@ class MyPyMysql:
         in_sql = hashed.hexdigest()
         for i in range(nmin, nmax):
             username = "test" + str(i)
-            result = (username, in_sql, "./assets/default.jpeg")
+            result = (username, in_sql, "http://localhost:8080/assets/default.jpeg")
             data_list.append(result)
 
         content = self.cur.executemany(sql, data_list)

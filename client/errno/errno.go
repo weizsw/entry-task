@@ -7,6 +7,8 @@ const (
 
 	LoginCredentialError = 11000
 	RegisterFailedError  = 11001
+	RedisError           = 12000
+	MySQLError           = 13000
 )
 
 var ErrorMsg = map[int]string{
@@ -15,4 +17,6 @@ var ErrorMsg = map[int]string{
 	StatusServerError:    "server error",
 	LoginCredentialError: "login credentials error",
 	RegisterFailedError:  "something went wrong",
+	RedisError:           "redis error",
+	MySQLError:           "mysql error",
 }

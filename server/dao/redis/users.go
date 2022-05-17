@@ -8,7 +8,9 @@ import (
 )
 
 const (
-	USER_INFO_CACHE = time.Minute * 5
+	USER_TOKEN_FMT   = "user:token:%s"
+	USER_INFO_CACHE  = time.Minute * 5
+	USER_TOKEN_CACHE = time.Minute * 10
 )
 
 var ErrNil = redis.Nil.Error()
@@ -42,4 +44,29 @@ func Del(client *redis.Client, key string) error {
 	}
 
 	return nil
+}
+
+func HSet(client *redis.Client, key string, field string, val interface{}) error {
+	pipe := client.Pipeline()
+	pipe.HSet(key, field, val).Result()
+	pipe.Expire(key, USER_TOKEN_CACHE)
+	_, err := pipe.Exec()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func HGet(client *redis.Client, key string, field string) (string, error) {
+	res, err := client.HGet(key, field).Result()
+	if err != nil {
+		return "", err
+	}
+
+	if err == redis.Nil {
+		return "", errors.New("redis nil")
+	}
+
+	return res, nil
 }

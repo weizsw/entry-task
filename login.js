@@ -2,24 +2,35 @@ import http from 'k6/http';
 import check from 'k6';
 
 export default function () {
-  const url = 'http://127.0.0.1:8080/login';
+  const url = 'http://127.0.0.1:8080/login'
 
-  let cnt = Math.floor(Math.random() * 200) + 1;
-
-  let user = "test" + cnt;
-  let payload = "username=" + user + "&password=test";
-  let new_url = url + '?' + payload
+  let cnt = Math.floor(Math.random() * 200) + 1
+  let payload = JSON.stringify({
+    Username: 'test' + cnt,
+    Password: 'test',
+  });
 
   const params = {
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Type': 'application/json',
     },
   };
 
-
-  http.post(new_url, {}, params);
-
+  http.post(url, payload, params)
   http.setResponseCallback(http.expectedStatuses(200));
+
+  // let user = "test" + cnt;
+  // let payload = "username=" + user + "&password=test";
+  // let new_url = url + '?' + payload
+
+  // const params = {
+  //   headers: {
+  //     'Content-Type': 'application/x-www-form-urlencoded',
+  //   },
+  // };
+
+  // http.post(new_url, {}, params);
+
 }
 
 

@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	DEFAULT_PROFILE = "./assets/default.jpeg"
+	DEFAULT_PROFILE = "http://localhost:8080/assets/default.jpeg"
 )
 
 type User struct {
@@ -27,7 +27,7 @@ func GetUser(db *sql.DB, username string) (*User, error) {
 	return ret, nil
 }
 
-func GetUserWithPrepare(stmt *sql.Stmt, username string) (*User, error) {
+func GetProfileWithPrepare(stmt *sql.Stmt, username string) (*User, error) {
 	ret := &User{}
 
 	err := stmt.QueryRow(username).Scan(&ret.ID, &ret.Username, &ret.Nickname, &ret.Password, &ret.ProfilePic)

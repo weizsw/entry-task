@@ -10,4 +10,4 @@ var MysqlClient *sql.DB
 
 var RedisClient *redis.Client
 
-var UserInfoStatement *sql.Stmt
+var UserProfileStatement *sql.Stmt
