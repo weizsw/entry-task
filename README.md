@@ -94,34 +94,34 @@ k6 run scripts/login.js --duration 30s --vus 1000 --rps 6000
 
 ```go
 func (s *Session) Write(data []byte) error {
- buf := make([]byte, 4+len(data))
- binary.BigEndian.PutUint32(buf[:4], uint32(len(data)))
- copy(buf[4:], data)
- _, err := s.conn.Write(buf)
- if err != nil {
-  log.Fatal("writing...", err.Error())
-  return err
- }
- return nil
+    buf := make([]byte, 4+len(data))
+    binary.BigEndian.PutUint32(buf[:4], uint32(len(data)))
+    copy(buf[4:], data)
+    _, err := s.conn.Write(buf)
+    if err != nil {
+        log.Fatal("writing...", err.Error())
+        return err
+    }
+    return nil
 ```
 
 ```go
 func (s *Session) Read() ([]byte, error) {
- header := make([]byte, 4)
- _, err := io.ReadFull(s.conn, header)
- if err != nil {
-  log.Fatal("reading size...", err.Error())
-  return nil, err
- }
+    header := make([]byte, 4)
+        _, err := io.ReadFull(s.conn, header)
+        if err != nil {
+        log.Fatal("reading size...", err.Error())
+        return nil, err
+    }
 
- dataLen := binary.BigEndian.Uint32(header)
- data := make([]byte, dataLen)
- _, err = io.ReadFull(s.conn, data)
- if err != nil {
-  log.Fatal("reading data...", err.Error())
-  return nil, err
- }
- return data, nil
+    dataLen := binary.BigEndian.Uint32(header)
+    data := make([]byte, dataLen)
+    _, err = io.ReadFull(s.conn, data)
+    if err != nil {
+        log.Fatal("reading data...", err.Error())
+        return nil, err
+    }
+    return data, nil
 ```
 
 ## Database Design
@@ -152,11 +152,11 @@ CREATE TABLE users (
 
 ```go
 type Pool struct {
- m           sync.Mutex
- conns       chan net.Conn
- factory     func() (net.Conn, error)
- closed      bool
- connTimeOut time.Duration
+    m           sync.Mutex
+    conns       chan net.Conn
+    factory     func() (net.Conn, error)
+    closed      bool
+    connTimeOut time.Duration
 }
 ```
 
