@@ -4,6 +4,7 @@ import (
 	"log"
 	"net"
 	_ "net/http/pprof"
+	"time"
 
 	"github.com/weizsw/entry-task/client/resource"
 	"github.com/weizsw/entry-task/client/router"
@@ -21,10 +22,10 @@ func initConnPool() {
 			return nil, err
 		}
 		return net.DialTCP("tcp", nil, conn)
-	}, 1000)
+	}, 1000, time.Second*1)
 	if err != nil {
 		log.Println(err.Error())
 	}
 
-	resource.CP = cp
+	resource.ConnPool = cp
 }

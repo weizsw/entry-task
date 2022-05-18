@@ -21,7 +21,7 @@ func (s *Session) Write(data []byte) error {
 	copy(buf[4:], data)
 	_, err := s.conn.Write(buf)
 	if err != nil {
-		log.Fatal("writing...", err.Error())
+		log.Println("writing...", err.Error())
 		return err
 	}
 	return nil
@@ -31,7 +31,7 @@ func (s *Session) Read() ([]byte, error) {
 	header := make([]byte, 4)
 	_, err := io.ReadFull(s.conn, header)
 	if err != nil {
-		log.Fatal("reading size...", err.Error())
+		log.Println("reading size...", err.Error())
 		return nil, err
 	}
 
@@ -39,7 +39,7 @@ func (s *Session) Read() ([]byte, error) {
 	data := make([]byte, dataLen)
 	_, err = io.ReadFull(s.conn, data)
 	if err != nil {
-		log.Fatal("reading data...", err.Error())
+		log.Println("reading data...", err.Error())
 		return nil, err
 	}
 	return data, nil

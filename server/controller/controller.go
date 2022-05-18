@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"log"
 	"net"
 
 	"github.com/weizsw/entry-task/pb"
@@ -23,7 +22,7 @@ func HandleConn(conn net.Conn) {
 		session := rpc.NewSession(conn)
 		data, err := session.Read()
 		if err != nil {
-			log.Fatal(err.Error())
+			return
 		}
 		req := &pb.Msg{}
 		err = req.Decode(data)

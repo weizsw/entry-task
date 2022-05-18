@@ -8,85 +8,110 @@ import (
 	"time"
 )
 
-var CP *Pool
+var ConnPool *Pool
 
 type Pool struct {
-	m        sync.Mutex
-	resource chan net.Conn
-	maxSize  int
-	usedSize int
-	factory  func() (net.Conn, error)
-	closed   bool
+	m           sync.Mutex
+	conns       chan net.Conn
+	factory     func() (net.Conn, error)
+	closed      bool
+	connTimeOut time.Duration
 }
 
-func NewConnPool(factory func() (net.Conn, error), cap int) (*Pool, error) {
+type Conn struct {
+	conn net.Conn
+	time time.Time
+}
+
+func NewConnPool(factory func() (net.Conn, error), cap int, connTimeOut time.Duration) (*Pool, error) {
 	if cap <= 0 {
 		return nil, errors.New("cap could not be zero")
 	}
 
+	if connTimeOut < 0 {
+		return nil, errors.New("connTimeOut could not be negative")
+	}
+
 	cp := &Pool{
-		m:        sync.Mutex{},
-		resource: make(chan net.Conn, cap),
-		maxSize:  cap,
-		usedSize: 0,
-		factory:  factory,
-		closed:   false,
+		m:           sync.Mutex{},
+		conns:       make(chan net.Conn, cap),
+		factory:     factory,
+		closed:      false,
+		connTimeOut: connTimeOut,
 	}
 
 	for i := 0; i < cap; i++ {
-		connRes, err := cp.factory()
+		res, err := cp.factory()
 		if err != nil {
+			cp.Close()
 			return nil, errors.New("factory err")
 		}
 
-		cp.resource <- connRes
+		cp.conns <- res
 	}
 
 	return cp, nil
 }
 
 func (p *Pool) Get() (net.Conn, error) {
-	p.m.Lock()
-	defer p.m.Unlock()
-	timeout := time.After(5 * time.Second)
+	if p.closed {
+		return nil, errors.New("pool closed")
+	}
+	timeout := time.After(p.connTimeOut)
 	for {
 		select {
+		case res, ok := <-p.conns:
+			{
+				if !ok {
+					return nil, errors.New("pool closed")
+				}
+
+				return res, nil
+			}
 		case <-timeout:
 			return nil, errors.New("timeout")
-		case r, ok := <-p.resource:
-			if !ok {
-				return nil, errors.New("pool has been closed")
-			}
-			p.usedSize++
-			return r, nil
 		default:
-			if p.usedSize < p.maxSize {
-				log.Printf("Acquire:"+"New Resource."+
-					"resource present size/max: %d/%d\n", p.usedSize, p.maxSize)
-				p.usedSize++
-				return p.factory()
+			{
+				log.Println("making new")
+				res, err := p.factory()
+				if err != nil {
+					log.Println("new failed")
+					return nil, err
+				}
+				return res, nil
 			}
 		}
-		time.Sleep(time.Second / 5)
 	}
-
 }
 
 func (p *Pool) Put(r net.Conn) {
-	p.m.Lock()
-	defer p.m.Unlock()
-
 	if p.closed {
-		r.Close()
 		return
 	}
 
-	p.usedSize--
-
 	select {
-	case p.resource <- r:
+	case p.conns <- r:
+
 	default:
-		log.Println("Release:", "Closing")
+		log.Println("put:", "closing")
 		r.Close()
 	}
+}
+
+func (cp *Pool) Close() {
+	if cp.closed {
+		return
+	}
+	cp.m.Lock()
+	cp.closed = true
+
+	close(cp.conns)
+	for conn := range cp.conns {
+		conn.Close()
+	}
+	cp.m.Unlock()
+}
+
+func (p *Pool) Len() int {
+	return len(p.conns)
 }

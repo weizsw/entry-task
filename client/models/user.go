@@ -10,12 +10,12 @@ import (
 )
 
 func Login(username string, password string) (int, interface{}, error) {
-	conn, err := resource.CP.Get()
+	conn, err := resource.ConnPool.Get()
 	if err != nil {
 		log.Println(err.Error())
 		return errno.StatusServerError, nil, err
 	}
-	defer resource.CP.Put(conn)
+	defer resource.ConnPool.Put(conn)
 
 	session := rpc.NewSession(conn)
 
@@ -38,8 +38,8 @@ func Login(username string, password string) (int, interface{}, error) {
 }
 
 func Register(username string, password string) (int, error) {
-	conn, err := resource.CP.Get()
-	defer resource.CP.Put(conn)
+	conn, err := resource.ConnPool.Get()
+	defer resource.ConnPool.Put(conn)
 
 	if err != nil {
 		log.Println(err.Error())
@@ -60,8 +60,8 @@ func Register(username string, password string) (int, error) {
 }
 
 func ChangeNickname(username string, nickname string) (int, error) {
-	conn, err := resource.CP.Get()
-	defer resource.CP.Put(conn)
+	conn, err := resource.ConnPool.Get()
+	defer resource.ConnPool.Put(conn)
 
 	if err != nil {
 		log.Println(err.Error())
@@ -82,8 +82,8 @@ func ChangeNickname(username string, nickname string) (int, error) {
 }
 
 func GetUserProfile(username string) (int, interface{}, error) {
-	conn, err := resource.CP.Get()
-	defer resource.CP.Put(conn)
+	conn, err := resource.ConnPool.Get()
+	defer resource.ConnPool.Put(conn)
 
 	if err != nil {
 		log.Println(err.Error())
@@ -111,8 +111,8 @@ func GetUserProfile(username string) (int, interface{}, error) {
 }
 
 func UpdatePic(username string, pic string) (int, error) {
-	conn, err := resource.CP.Get()
-	defer resource.CP.Put(conn)
+	conn, err := resource.ConnPool.Get()
+	defer resource.ConnPool.Put(conn)
 
 	if err != nil {
 		log.Println(err.Error())
