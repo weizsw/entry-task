@@ -15,13 +15,26 @@ import (
 
 func Login(session *rpc.Session, req *pb.Msg) {
 	msg := &pb.Msg{}
-
-	res, err := db.GetProfileWithPrepare(resource.UserProfileStatement, req.LoginRequest.Username)
+	res := &db.User{}
+	passwd, err := redis.Get(resource.RedisClient, fmt.Sprintf(redis.USER_PASSWD_FMT, req.LoginRequest.Username))
 	if err != nil {
-		log.Println(err.Error())
-		msg = &pb.Msg{Code: errno.LoginCredentialError, Message: err.Error()}
-		rpc.SendRequest(session, msg)
-		return
+		log.Println(err)
+		res, err = db.GetProfileWithPrepare(resource.UserProfileStatement, req.LoginRequest.Username)
+		if err != nil {
+			log.Println(err.Error())
+			msg = &pb.Msg{Code: errno.LoginCredentialError, Message: err.Error()}
+			rpc.SendRequest(session, msg)
+			return
+		}
+
+		go func() {
+			err := redis.Set(resource.RedisClient, fmt.Sprintf(redis.USER_PASSWD_FMT, res.Username), res.Password)
+			if err != nil {
+				log.Println(err)
+			}
+		}()
+	} else {
+		res.Password = passwd
 	}
 
 	if res.Password != req.LoginRequest.Password {

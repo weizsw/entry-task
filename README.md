@@ -94,47 +94,47 @@ k6 run scripts/login.js --duration 30s --vus 1000 --rps 6000
 
 ```go
 func (s *Session) Write(data []byte) error {
-	buf := make([]byte, 4+len(data))
-	binary.BigEndian.PutUint32(buf[:4], uint32(len(data)))
-	copy(buf[4:], data)
-	_, err := s.conn.Write(buf)
-	if err != nil {
-		log.Fatal("writing...", err.Error())
-		return err
-	}
-	return nil
+ buf := make([]byte, 4+len(data))
+ binary.BigEndian.PutUint32(buf[:4], uint32(len(data)))
+ copy(buf[4:], data)
+ _, err := s.conn.Write(buf)
+ if err != nil {
+  log.Fatal("writing...", err.Error())
+  return err
+ }
+ return nil
 ```
 
 ```go
 func (s *Session) Read() ([]byte, error) {
-	header := make([]byte, 4)
-	_, err := io.ReadFull(s.conn, header)
-	if err != nil {
-		log.Fatal("reading size...", err.Error())
-		return nil, err
-	}
+ header := make([]byte, 4)
+ _, err := io.ReadFull(s.conn, header)
+ if err != nil {
+  log.Fatal("reading size...", err.Error())
+  return nil, err
+ }
 
-	dataLen := binary.BigEndian.Uint32(header)
-	data := make([]byte, dataLen)
-	_, err = io.ReadFull(s.conn, data)
-	if err != nil {
-		log.Fatal("reading data...", err.Error())
-		return nil, err
-	}
-	return data, nil
+ dataLen := binary.BigEndian.Uint32(header)
+ data := make([]byte, dataLen)
+ _, err = io.ReadFull(s.conn, data)
+ if err != nil {
+  log.Fatal("reading data...", err.Error())
+  return nil, err
+ }
+ return data, nil
 ```
 
 ## Database Design
 
 ```sql
 CREATE TABLE users (
- id int NOT NULL AUTO_INCREMENT,
- username varchar(20) NOT NULL,
- nickname varchar(20) NOT NULL default '',
- password varchar(200) NOT NULL,
- profile_pic varchar(200),
- PRIMARY KEY (id),
- UNIQUE KEY `index_username` (`username`)
+    id int NOT NULL AUTO_INCREMENT,
+    username varchar(20) NOT NULL,
+    nickname varchar(20) NOT NULL default '',
+    password varchar(200) NOT NULL,
+    profile_pic varchar(200),
+    PRIMARY KEY (id),
+    UNIQUE KEY `index_username` (`username`)
 );
 ```
 
@@ -152,12 +152,11 @@ CREATE TABLE users (
 
 ```go
 type Pool struct {
- m        sync.Mutex
- resource chan net.Conn
- maxSize  int
- usedSize int
- factory  func() (net.Conn, error)
- closed   bool
+ m           sync.Mutex
+ conns       chan net.Conn
+ factory     func() (net.Conn, error)
+ closed      bool
+ connTimeOut time.Duration
 }
 ```
 
@@ -290,14 +289,12 @@ curl --location --request POST '127.0.0.1:8080/register' \
 - [x] from at least 200 unique users
 - [x] no socket/timeout error
 
+![](assets/bennchmark.png)
+
 >With cache layer
 
 - [x] supports 6000 login requests per second
 - [x] from at least 200 unique users
 - [x] no socket/timeout error
 
-![](assets/bennchmark.png)
-
-```text
-Since the RPS without a cache layer is almost reached the requirement with a cache layer, thus, the cache layer is not implemented.
-```
+![](assets/benchamark-with-cache.png)

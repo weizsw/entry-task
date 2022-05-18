@@ -9,6 +9,7 @@ import (
 
 const (
 	USER_TOKEN_FMT   = "user:token:%s"
+	USER_PASSWD_FMT  = "user:passwd:%s"
 	USER_INFO_CACHE  = time.Minute * 5
 	USER_TOKEN_CACHE = time.Minute * 10
 )
