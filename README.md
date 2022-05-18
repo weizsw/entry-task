@@ -14,7 +14,7 @@
   - [Structure](#structure)
   - [Setup](#setup)
   - [Usage](#usage)
-  - [Process](#process)
+  - [API Design](#api-design)
     - [login](#login)
     - [user profile](#user-profile)
     - [change nickname](#change-nickname)
@@ -89,7 +89,7 @@ brew install k6
 k6 run scripts/login.js --duration 30s --vus 1000 --rps 6000
 ```
 
-## Process
+## API Design
 
 ***All params are required for requests below***
 
