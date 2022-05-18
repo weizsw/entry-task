@@ -18,7 +18,7 @@
   - [Database Design](#database-design)
   - [Redis Design](#redis-design)
   - [Password Enncryption](#password-enncryption)
-  - [Simple Connection Pool](#simple-connection-pool)
+  - [Connection Pool](#connection-pool)
   - [API Design](#api-design)
     - [login](#login)
     - [user profile](#user-profile)
