@@ -14,16 +14,17 @@
   - [Structure](#structure)
   - [Setup](#setup)
   - [Usage](#usage)
+  - [Protocol](#protocol)
+  - [Database Design](#database-design)
+  - [Redis Design](#redis-design)
+  - [Password Enncryption](#password-enncryption)
+  - [Simple Connection Pool](#simple-connection-pool)
   - [API Design](#api-design)
     - [login](#login)
     - [user profile](#user-profile)
     - [change nickname](#change-nickname)
     - [change avatar](#change-avatar)
     - [register](#register)
-  - [Database Design](#database-design)
-  - [Redis Design](#redis-design)
-  - [Password Enncryption](#password-enncryption)
-  - [Simple Connection Pool](#simple-connection-pool)
   - [Benchmark](#benchmark)
 
 ## TL;DR
@@ -88,6 +89,81 @@ npm run dev
 brew install k6
 k6 run scripts/login.js --duration 30s --vus 1000 --rps 6000
 ```
+
+## Protocol
+
+```go
+func (s *Session) Write(data []byte) error {
+	buf := make([]byte, 4+len(data))
+	binary.BigEndian.PutUint32(buf[:4], uint32(len(data)))
+	copy(buf[4:], data)
+	_, err := s.conn.Write(buf)
+	if err != nil {
+		log.Fatal("writing...", err.Error())
+		return err
+	}
+	return nil
+```
+
+```go
+func (s *Session) Read() ([]byte, error) {
+	header := make([]byte, 4)
+	_, err := io.ReadFull(s.conn, header)
+	if err != nil {
+		log.Fatal("reading size...", err.Error())
+		return nil, err
+	}
+
+	dataLen := binary.BigEndian.Uint32(header)
+	data := make([]byte, dataLen)
+	_, err = io.ReadFull(s.conn, data)
+	if err != nil {
+		log.Fatal("reading data...", err.Error())
+		return nil, err
+	}
+	return data, nil
+```
+
+## Database Design
+
+```sql
+CREATE TABLE users (
+ id int NOT NULL AUTO_INCREMENT,
+ username varchar(20) NOT NULL,
+ nickname varchar(20) NOT NULL default '',
+ password varchar(200) NOT NULL,
+ profile_pic varchar(200),
+ PRIMARY KEY (id),
+ UNIQUE KEY `index_username` (`username`)
+);
+```
+
+## Redis Design
+
+> For a token, hash was used, tokens are saved as "user:token:{username}" as the key, each token takes a field and value is 1.
+
+> The others are just normal string.
+
+## Password Enncryption
+
+> Bcrypt was used initially, but for performance issues, each Bcrypt hash took around 200-300ms, therefore, a regular md5 hash is used eventually.
+
+## Simple Connection Pool
+
+```go
+type Pool struct {
+ m        sync.Mutex
+ resource chan net.Conn
+ maxSize  int
+ usedSize int
+ factory  func() (net.Conn, error)
+ closed   bool
+}
+```
+
+>Channel was used for the connection pool, there will be 2000 connections established with TCP server once the client is initiated, each request sent by HTTP server will acquire a connection from the pool, if there are no connections left in the pool and the max size is not reached, the factory will produce a new connection.
+
+>Once the request is finished, the connection will be released to the pool for future use. basically, there are 2000 connections maintained.
 
 ## API Design
 
@@ -203,47 +279,6 @@ curl --location --request POST '127.0.0.1:8080/register' \
     "msg": "ok"
 }
 ```
-
-## Database Design
-
-```sql
-CREATE TABLE users (
- id int NOT NULL AUTO_INCREMENT,
- username varchar(20) NOT NULL,
- nickname varchar(20) NOT NULL default '',
- password varchar(200) NOT NULL,
- profile_pic varchar(200),
- PRIMARY KEY (id),
- UNIQUE KEY `index_username` (`username`)
-);
-```
-
-## Redis Design
-
-> For a token, hash was used, tokens are saved as "user:token:{username}" as the key, each token takes a field and value is 1.
-
-> The others are just normal string.
-
-## Password Enncryption
-
-> Bcrypt was used initially, but for performance issues, each Bcrypt hash took around 200-300ms, therefore, a regular md5 hash is used eventually.
-
-## Simple Connection Pool
-
-```go
-type Pool struct {
- m        sync.Mutex
- resource chan net.Conn
- maxSize  int
- usedSize int
- factory  func() (net.Conn, error)
- closed   bool
-}
-```
-
->Channel was used for the connection pool, there will be 2000 connections established with TCP server once the client is initiated, each request sent by HTTP server will acquire a connection from the pool, if there are no connections left in the pool and the max size is not reached, the factory will produce a new connection.
-
->Once the request is finished, the connection will be released to the pool for future use. basically, there are 2000 connections maintained.
 
 ## Benchmark
 
