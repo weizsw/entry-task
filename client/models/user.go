@@ -5,25 +5,21 @@ import (
 
 	"github.com/weizsw/entry-task/client/errno"
 	"github.com/weizsw/entry-task/client/resource"
-
-	"github.com/weizsw/entry-task/client/utils"
 	"github.com/weizsw/entry-task/pb"
 	"github.com/weizsw/entry-task/rpc"
 )
 
 func Login(username string, password string) (int, interface{}, error) {
 	conn, err := resource.CP.Get()
-	defer resource.CP.Put(conn)
-
 	if err != nil {
 		log.Println(err.Error())
-		return errno.StatusParamsError, nil, err
+		return errno.StatusServerError, nil, err
 	}
+	defer resource.CP.Put(conn)
 
 	session := rpc.NewSession(conn)
-	hash := utils.GetMD5Hash(password)
 
-	msg := pb.Msg{ServiceName: "login", LoginRequest: &pb.LoginRequest{Username: username, Password: hash}}
+	msg := pb.Msg{ServiceName: "login", LoginRequest: &pb.LoginRequest{Username: username, Password: password}}
 
 	ret, err := rpc.SendRequestForResp(session, &msg)
 

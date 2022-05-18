@@ -21,7 +21,7 @@ func initConnPool() {
 			return nil, err
 		}
 		return net.DialTCP("tcp", nil, conn)
-	}, 2000)
+	}, 1000)
 	if err != nil {
 		log.Println(err.Error())
 	}

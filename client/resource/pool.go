@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"sync"
+	"time"
 )
 
 var CP *Pool
@@ -47,26 +48,28 @@ func NewConnPool(factory func() (net.Conn, error), cap int) (*Pool, error) {
 func (p *Pool) Get() (net.Conn, error) {
 	p.m.Lock()
 	defer p.m.Unlock()
-
-	select {
-	case r, ok := <-p.resource:
-		if !ok {
-			log.Println("Pool has been closed.")
-			return nil, errors.New("Pool has been closed.")
-		}
-		p.usedSize++
-		return r, nil
-	default:
-		if p.usedSize < p.maxSize {
-			log.Printf("Acquire:"+"New Resource."+
-				"resource present size/max: %d/%d\n", p.usedSize, p.maxSize)
+	timeout := time.After(5 * time.Second)
+	for {
+		select {
+		case <-timeout:
+			return nil, errors.New("timeout")
+		case r, ok := <-p.resource:
+			if !ok {
+				return nil, errors.New("pool has been closed")
+			}
 			p.usedSize++
-			return p.factory()
-		} else {
-			log.Println("create err")
-			return nil, nil
+			return r, nil
+		default:
+			if p.usedSize < p.maxSize {
+				log.Printf("Acquire:"+"New Resource."+
+					"resource present size/max: %d/%d\n", p.usedSize, p.maxSize)
+				p.usedSize++
+				return p.factory()
+			}
 		}
+		time.Sleep(time.Second / 5)
 	}
+
 }
 
 func (p *Pool) Put(r net.Conn) {

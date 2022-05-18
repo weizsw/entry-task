@@ -25,8 +25,8 @@ func initMysqlOnce() {
 		panic(err)
 	}
 
-	client.SetMaxOpenConns(2000)
-	client.SetMaxIdleConns(2000)
+	client.SetMaxOpenConns(1000)
+	client.SetMaxIdleConns(1000)
 	resource.MysqlClient = client
 
 	stmt, err := client.Prepare("SELECT * FROM users WHERE username = ?")

@@ -14,6 +14,7 @@
 }
 </style>
 <script>
+import md5 from 'js-md5'
 export default {
     name: "Login",
     data() {
@@ -30,7 +31,7 @@ export default {
                 url: '/login',
                 data: ({
                     username: this.username,
-                    password: this.password,
+                    password: md5(this.password),
                 })
             }).then(response => {
                 localStorage.setItem('token', response.data['data']['token'])
