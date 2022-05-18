@@ -52,7 +52,7 @@ A web application implemented by Go, supports login, changing user profile, Use 
 
 ## Setup
 
->MySQL and Reids
+>MySQL and Redis
 
 ```text
 MySQL and Redis are required for the project, before running the project, make sure they are running.
@@ -63,7 +63,11 @@ Search for 3306 and 6379 to change the credentials and configs.
 >Fake data
 
 ```text
-change MySQL configs in /scripts/fake.py respectively.
+Change MySQL configs in /scripts/fake.py respectively.
+```
+
+```python
+python3 scripts/fake.py
 ```
 
 ## Usage
@@ -148,7 +152,7 @@ CREATE TABLE users (
 
 > Bcrypt was used initially, but for performance issues, each Bcrypt hash took around 200-300ms, therefore, a regular md5 hash is used eventually.
 
-## Simple Connection Pool
+## Connection Pool
 
 ```go
 type Pool struct {
