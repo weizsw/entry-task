@@ -285,6 +285,10 @@ curl --location --request POST '127.0.0.1:8080/register' \
 
 ## Benchmark
 
+> Spec
+
+![](assets/machine-spec.png)
+
 - [x] Supports 1000 concurrent http requests
 
 >Without cache layer
